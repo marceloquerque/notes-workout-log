@@ -8,10 +8,14 @@
 import SwiftUI
 import SwiftData
 
+private enum InitializationState {
+    case success(container: ModelContainer, store: NotesStore)
+    case failure(Error)
+}
+
 @main
 struct notes_workout_logApp: App {
-    let modelContainer: ModelContainer
-    let notesStore: NotesStore
+    private let state: InitializationState
     
     init() {
         do {
@@ -20,25 +24,31 @@ struct notes_workout_logApp: App {
                 schema: schema,
                 isStoredInMemoryOnly: false
             )
-            modelContainer = try ModelContainer(
+            let container = try ModelContainer(
                 for: schema,
                 configurations: [modelConfiguration]
             )
             
             // Migrate legacy UserDefaults data if needed
-            DataMigrator.migrateIfNeeded(context: modelContainer.mainContext)
+            DataMigrator.migrateIfNeeded(context: container.mainContext)
             
-            notesStore = NotesStore(modelContext: modelContainer.mainContext)
+            let store = NotesStore(modelContext: container.mainContext)
+            state = .success(container: container, store: store)
         } catch {
-            fatalError("Failed to initialize ModelContainer: \(error)")
+            state = .failure(error)
         }
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(notesStore)
+            switch state {
+            case .success(let container, let store):
+                ContentView()
+                    .environment(store)
+                    .modelContainer(container)
+            case .failure(let error):
+                DatabaseErrorView(error: error)
+            }
         }
-        .modelContainer(modelContainer)
     }
 }
