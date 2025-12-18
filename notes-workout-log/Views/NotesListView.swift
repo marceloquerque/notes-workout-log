@@ -10,78 +10,72 @@ import SwiftUI
 struct NotesListView: View {
     let folder: Folder
     let foldersViewModel: FoldersViewModel
-    @State private var notesViewModel: NotesViewModel
+    let notesViewModel: NotesViewModel
     @State private var searchText: String = ""
-    @State private var showMenu = false
-    @State private var navigationPath = NavigationPath()
-    
-    init(folder: Folder, foldersViewModel: FoldersViewModel, notesViewModel: NotesViewModel) {
-        self.folder = folder
-        self.foldersViewModel = foldersViewModel
-        self._notesViewModel = State(initialValue: notesViewModel)
-    }
+    @State private var newNoteToEdit: Note?
     
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            Group {
-                if notesViewModel.filteredNotes.isEmpty {
-                    EmptyStateView(message: "No Notes")
-                } else {
-                    notesList
-                }
+        Group {
+            if notesViewModel.filteredNotes.isEmpty {
+                EmptyStateView(message: "No Notes")
+            } else {
+                notesList
             }
-            .navigationTitle(folder.name)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(role: .destructive) {
-                            // Delete action - handled by swipe
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        .disabled(true)
-                        
-                        Button {
-                            // Copy action placeholder
-                        } label: {
-                            Label("Copy", systemImage: "doc.on.doc")
-                        }
-                        .disabled(true)
-                        
-                        Button {
-                            // Create Folder - navigate back to folders list
-                        } label: {
-                            Label("Create Folder", systemImage: "folder.badge.plus")
-                        }
-                        .disabled(true)
+        }
+        .navigationTitle(folder.name)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button(role: .destructive) {
+                        // Delete action - handled by swipe
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Label("Delete", systemImage: "trash")
+                    }
+                    .disabled(true)
+                    
+                    Button {
+                        // Copy action placeholder
+                    } label: {
+                        Label("Copy", systemImage: "doc.on.doc")
+                    }
+                    .disabled(true)
+                    
+                    Button {
+                        // Create Folder - navigate back to folders list
+                    } label: {
+                        Label("Create Folder", systemImage: "folder.badge.plus")
+                    }
+                    .disabled(true)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+            ToolbarItem(placement: .bottomBar) {
+                HStack {
+                    Spacer()
+                    Button {
+                        notesViewModel.loadNotes(for: folder.id)
+                        let note = notesViewModel.createNote()
+                        newNoteToEdit = note
+                    } label: {
+                        Image(systemName: "square.and.pencil")
                     }
                 }
-                ToolbarItem(placement: .bottomBar) {
-                    HStack {
-                        Spacer()
-                        Button {
-                            notesViewModel.loadNotes(for: folder.id)
-                            let note = notesViewModel.createNote()
-                            navigationPath.append(note)
-                        } label: {
-                            Image(systemName: "square.and.pencil")
-                        }
-                    }
-                }
             }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .onChange(of: searchText) { oldValue, newValue in
-                notesViewModel.searchText = newValue
-            }
-            .onAppear {
-                notesViewModel.loadNotes(for: folder.id)
-            }
-            .navigationDestination(for: Note.self) { note in
-                NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
-            }
+        }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+        .onChange(of: searchText) { oldValue, newValue in
+            notesViewModel.searchText = newValue
+        }
+        .onAppear {
+            notesViewModel.loadNotes(for: folder.id)
+        }
+        .navigationDestination(for: Note.self) { note in
+            NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
+        }
+        .navigationDestination(item: $newNoteToEdit) { note in
+            NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
         }
     }
     
@@ -147,10 +141,12 @@ struct NotesListView: View {
 }
 
 #Preview {
-    NotesListView(
-        folder: Folder(name: "Notes"),
-        foldersViewModel: FoldersViewModel(),
-        notesViewModel: NotesViewModel()
-    )
+    NavigationStack {
+        NotesListView(
+            folder: Folder(name: "Notes"),
+            foldersViewModel: FoldersViewModel(),
+            notesViewModel: NotesViewModel()
+        )
+    }
 }
 

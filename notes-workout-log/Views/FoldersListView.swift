@@ -56,7 +56,6 @@ struct FoldersListView: View {
                             if let defaultFolder = foldersViewModel.folders.first {
                                 notesViewModel.loadNotes(for: defaultFolder.id)
                                 let note = notesViewModel.createNote()
-                                navigationPath.append(defaultFolder)
                                 navigationPath.append(note)
                             }
                         } label: {
