@@ -15,7 +15,7 @@ final class NotesStore {
     var searchText: String = ""
     
     private let modelContext: ModelContext
-    private let logger = Logger(subsystem: "com.notes-workout-log", category: "NotesStore")
+    private let logger = Logger(subsystem: AppIdentifiers.loggerSubsystem, category: "NotesStore")
     
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -121,7 +121,7 @@ final class NotesStore {
         do {
             let folders = try modelContext.fetch(descriptor)
             if folders.isEmpty {
-                let defaultFolder = Folder(name: "Notes")
+                let defaultFolder = Folder(name: AppStrings.defaultFolderName)
                 modelContext.insert(defaultFolder)
                 try modelContext.save()
                 logger.info("Created default folder")

@@ -24,7 +24,7 @@ struct NoteEditorView: View {
     private var title: String {
         let lines = content.components(separatedBy: .newlines)
         let firstLine = lines.first?.trimmingCharacters(in: .whitespaces) ?? ""
-        return firstLine.isEmpty ? "New Note" : firstLine
+        return firstLine.isEmpty ? AppStrings.newNoteTitle : firstLine
     }
     
     var body: some View {
@@ -55,13 +55,13 @@ struct NoteEditorView: View {
                             store.deleteNote(note)
                             dismiss()
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label(AppStrings.delete, systemImage: "trash")
                         }
                         
                         Button {
                             // Share placeholder
                         } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
+                            Label(AppStrings.share, systemImage: "square.and.arrow.up")
                         }
                         .disabled(true)
                     } label: {
@@ -99,7 +99,7 @@ struct NoteEditorView: View {
 
 #Preview {
     let container = try! ModelContainer(for: Folder.self, Note.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
-    let folder = Folder(name: "Notes")
+    let folder = Folder(name: AppStrings.defaultFolderName)
     let note = Note(content: "Sample note", folder: folder)
     container.mainContext.insert(folder)
     container.mainContext.insert(note)

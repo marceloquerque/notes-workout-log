@@ -16,22 +16,22 @@ enum AppError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .saveFailed:
-            return "Failed to save changes"
+            return AppStrings.Errors.saveFailed
         case .deleteFailed:
-            return "Failed to delete item"
+            return AppStrings.Errors.deleteFailed
         case .folderRequired:
-            return "A folder is required for this action"
+            return AppStrings.Errors.folderRequired
         case .unknown:
-            return "An unexpected error occurred"
+            return AppStrings.Errors.unknown
         }
     }
     
     var recoverySuggestion: String? {
         switch self {
         case .saveFailed, .deleteFailed, .unknown:
-            return "Please try again. If the problem persists, restart the app."
+            return AppStrings.Errors.tryAgainSuggestion
         case .folderRequired:
-            return "Select or create a folder first."
+            return AppStrings.Errors.selectFolderSuggestion
         }
     }
 }
@@ -42,7 +42,7 @@ struct AppAlert: Identifiable {
     let message: String
     
     init(error: AppError) {
-        self.title = error.errorDescription ?? "Error"
+        self.title = error.errorDescription ?? AppStrings.Errors.defaultTitle
         self.message = error.recoverySuggestion ?? ""
     }
     

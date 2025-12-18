@@ -147,13 +147,13 @@ final class NotesStoreTests: XCTestCase {
         let folder = store.createFolder(name: "Test")!
         let note = store.createNote(in: folder)!
         
-        XCTAssertEqual(note.title, "New Note")
+        XCTAssertEqual(note.title, AppStrings.newNoteTitle)
         
         store.updateNoteContent(note, content: "My Title\nSome content here")
         XCTAssertEqual(note.title, "My Title")
         
         store.updateNoteContent(note, content: "  \nContent only")
-        XCTAssertEqual(note.title, "New Note")
+        XCTAssertEqual(note.title, AppStrings.newNoteTitle)
     }
     
     func testNotePreview() throws {
@@ -172,8 +172,9 @@ final class NotesStoreTests: XCTestCase {
     // MARK: - Default Folder Tests
     
     func testDefaultFolderCreatedOnInit() throws {
+        let defaultFolderName = AppStrings.defaultFolderName
         let descriptor = FetchDescriptor<Folder>(
-            predicate: #Predicate { $0.name == "Notes" }
+            predicate: #Predicate { $0.name == defaultFolderName }
         )
         let folders = try container.mainContext.fetch(descriptor)
         XCTAssertEqual(folders.count, 1)

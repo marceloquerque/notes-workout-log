@@ -1,0 +1,58 @@
+# SwiftLint configuration for notes-workout-log
+# CI-only enforcement
+
+included:
+  - notes-workout-log
+  - notes-workout-logTests
+
+excluded:
+  - notes-workout-log.xcodeproj
+  - "**/*.xcuserstate"
+  - "**/xcuserdata"
+
+# Pragmatic ruleset for SwiftUI apps
+disabled_rules:
+  - trailing_comma           # Allow trailing commas for easier diffing
+  - identifier_name          # SwiftUI often uses short names like `$`-prefixed vars
+  - type_body_length         # Views can be long, especially with previews
+  - file_length              # Allow longer files when needed
+  - function_body_length     # Some view bodies are naturally long
+  - cyclomatic_complexity    # Complex views happen
+  - nesting                  # SwiftUI navigation/grouping often needs nesting
+
+opt_in_rules:
+  - empty_count              # Prefer .isEmpty over .count == 0
+  - empty_string             # Prefer .isEmpty over == ""
+  - force_unwrapping         # Avoid force unwraps
+  - implicitly_unwrapped_optional
+  - multiline_arguments
+  - multiline_parameters
+  - operator_usage_whitespace
+  - overridden_super_call
+  - private_action
+  - private_outlet
+  - redundant_nil_coalescing
+  - sorted_imports
+  - toggle_bool              # Prefer .toggle() over = !value
+  - vertical_whitespace_closing_braces
+
+# Line length: relaxed for SwiftUI (modifiers chain horizontally)
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+# Allow up to 6 function parameters (SwiftUI initializers often have many)
+function_parameter_count:
+  warning: 6
+  error: 8
+
+# Large tuple allowance for SwiftUI state
+large_tuple:
+  warning: 4
+  error: 6
+
+# Reporter for CI
+reporter: "xcode"
+

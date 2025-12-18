@@ -39,7 +39,7 @@ struct NotesListView: View {
     
     private var groupedNotes: [String: [Note]] {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
+        formatter.dateFormat = AppDateFormats.monthName
         
         var grouped: [String: [Note]] = [:]
         for note in filteredNotes {
@@ -51,7 +51,7 @@ struct NotesListView: View {
     
     private var sortedMonthKeys: [String] {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
+        formatter.dateFormat = AppDateFormats.monthName
         
         let uniqueMonths = Set(filteredNotes.map { formatter.string(from: $0.createdAt) })
         return uniqueMonths.sorted { month1, month2 in
@@ -66,7 +66,7 @@ struct NotesListView: View {
     var body: some View {
         Group {
             if filteredNotes.isEmpty {
-                EmptyStateView(message: "No Notes")
+                EmptyStateView(message: AppStrings.noNotes)
             } else {
                 notesList
             }
@@ -79,21 +79,21 @@ struct NotesListView: View {
                     Button(role: .destructive) {
                         // Delete action - handled by swipe
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label(AppStrings.delete, systemImage: "trash")
                     }
                     .disabled(true)
                     
                     Button {
                         // Copy action placeholder
                     } label: {
-                        Label("Copy", systemImage: "doc.on.doc")
+                        Label(AppStrings.copy, systemImage: "doc.on.doc")
                     }
                     .disabled(true)
                     
                     Button {
                         // Create Folder - navigate back to folders list
                     } label: {
-                        Label("Create Folder", systemImage: "folder.badge.plus")
+                        Label(AppStrings.createFolder, systemImage: "folder.badge.plus")
                     }
                     .disabled(true)
                 } label: {
@@ -156,7 +156,7 @@ private struct NoteRow: View {
     
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yy"
+        formatter.dateFormat = AppDateFormats.noteRowDate
         return formatter
     }()
     
@@ -187,7 +187,7 @@ private struct NoteRow: View {
 
 #Preview {
     NavigationStack {
-        NotesListView(folder: Folder(name: "Notes"))
+        NotesListView(folder: Folder(name: AppStrings.defaultFolderName))
             .modelContainer(for: [Folder.self, Note.self], inMemory: true)
             .environment(NotesStore(modelContext: ModelContext(try! ModelContainer(for: Folder.self, Note.self))))
     }

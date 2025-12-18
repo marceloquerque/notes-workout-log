@@ -24,6 +24,6 @@ struct EmptyStateView: View {
 }
 
 #Preview {
-    EmptyStateView(message: "No Notes")
+    EmptyStateView(message: AppStrings.noNotes)
 }
 

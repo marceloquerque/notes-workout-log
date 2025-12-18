@@ -26,12 +26,12 @@ struct FoldersListView: View {
         NavigationStack(path: $navigationPath) {
             Group {
                 if filteredFolders.isEmpty && !searchText.isEmpty {
-                    EmptyStateView(message: "No Folders")
+                    EmptyStateView(message: AppStrings.noFolders)
                 } else if folders.isEmpty {
-                    EmptyStateView(message: "No Folders")
+                    EmptyStateView(message: AppStrings.noFolders)
                 } else {
                     List {
-                        Section("On My iPhone") {
+                        Section(AppStrings.onMyiPhone) {
                             ForEach(filteredFolders) { folder in
                                 NavigationLink(value: folder) {
                                     FolderRow(folder: folder)
@@ -42,7 +42,7 @@ struct FoldersListView: View {
                     }
                 }
             }
-            .navigationTitle("Folders")
+            .navigationTitle(AppStrings.folders)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

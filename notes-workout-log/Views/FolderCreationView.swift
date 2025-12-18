@@ -16,19 +16,19 @@ struct FolderCreationView: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Folder Name", text: $folderName)
+                TextField(AppStrings.folderNamePlaceholder, text: $folderName)
                     .textInputAutocapitalization(.words)
             }
-            .navigationTitle("New Folder")
+            .navigationTitle(AppStrings.newFolder)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(AppStrings.cancel) {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
+                    Button(AppStrings.create) {
                         let trimmed = folderName.trimmingCharacters(in: .whitespaces)
                         if !trimmed.isEmpty {
                             store.createFolder(name: trimmed)

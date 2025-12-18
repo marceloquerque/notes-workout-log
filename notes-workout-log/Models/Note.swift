@@ -20,7 +20,7 @@ final class Note {
     var title: String {
         let lines = content.components(separatedBy: .newlines)
         let firstLine = lines.first?.trimmingCharacters(in: .whitespaces) ?? ""
-        return firstLine.isEmpty ? "New Note" : firstLine
+        return firstLine.isEmpty ? AppStrings.newNoteTitle : firstLine
     }
     
     var preview: String {

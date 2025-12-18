@@ -11,7 +11,7 @@ import OSLog
 
 /// Handles one-time migration from UserDefaults (legacy) to SwiftData
 enum DataMigrator {
-    private static let logger = Logger(subsystem: "com.notes-workout-log", category: "DataMigrator")
+    private static let logger = Logger(subsystem: AppIdentifiers.loggerSubsystem, category: "DataMigrator")
     
     private static let didMigrateKey = "didMigrateToSwiftData"
     private static let savedFoldersKey = "savedFolders"
@@ -84,7 +84,7 @@ enum DataMigrator {
         if let existing = folderMap.values.first {
             defaultFolder = existing
         } else {
-            defaultFolder = Folder(name: "Notes")
+            defaultFolder = Folder(name: AppStrings.defaultFolderName)
             context.insert(defaultFolder)
         }
         
