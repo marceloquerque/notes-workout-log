@@ -24,6 +24,10 @@ struct notes_workout_logApp: App {
                 for: schema,
                 configurations: [modelConfiguration]
             )
+            
+            // Migrate legacy UserDefaults data if needed
+            DataMigrator.migrateIfNeeded(context: modelContainer.mainContext)
+            
             notesStore = NotesStore(modelContext: modelContainer.mainContext)
         } catch {
             fatalError("Failed to initialize ModelContainer: \(error)")
