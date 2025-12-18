@@ -72,7 +72,7 @@ struct NotesListView: View {
             notesViewModel.loadNotes(for: folder.id)
         }
         .navigationDestination(item: $newNoteToEdit) { note in
-            NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
+            NoteEditorView(note: note, notesViewModel: notesViewModel)
         }
     }
     

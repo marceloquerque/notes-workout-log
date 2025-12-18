@@ -76,9 +76,7 @@ struct FoldersListView: View {
                 NotesListView(folder: folder, foldersViewModel: foldersViewModel, notesViewModel: notesViewModel)
             }
             .navigationDestination(for: Note.self) { note in
-                if let folder = foldersViewModel.folders.first(where: { $0.id == note.folderId }) {
-                    NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
-                }
+                NoteEditorView(note: note, notesViewModel: notesViewModel)
             }
         }
     }

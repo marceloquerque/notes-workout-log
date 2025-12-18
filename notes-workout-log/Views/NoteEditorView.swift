@@ -11,10 +11,8 @@ struct NoteEditorView: View {
     @State private var viewModel: NoteEditorViewModel
     @Environment(\.dismiss) private var dismiss
     let notesViewModel: NotesViewModel
-    let folderName: String
     
-    init(note: Note, folderName: String, notesViewModel: NotesViewModel) {
-        self.folderName = folderName
+    init(note: Note, notesViewModel: NotesViewModel) {
         self.notesViewModel = notesViewModel
         self._viewModel = State(initialValue: NoteEditorViewModel(note: note, notesViewModel: notesViewModel))
     }
@@ -25,17 +23,21 @@ struct NoteEditorView: View {
             .autocorrectionDisabled()
             .navigationTitle(viewModel.title)
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         viewModel.save()
                         dismiss()
                     } label: {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text(folderName)
-                        }
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .padding(10)
+                            .background(Color(.systemGray5))
+                            .clipShape(Circle())
                     }
+                    .buttonStyle(.plain)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -67,7 +69,6 @@ struct NoteEditorView: View {
     NavigationStack {
         NoteEditorView(
             note: Note(content: "Sample note", folderId: UUID()),
-            folderName: "Notes",
             notesViewModel: NotesViewModel()
         )
     }
