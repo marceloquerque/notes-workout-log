@@ -22,6 +22,7 @@ struct NoteEditorView: View {
     var body: some View {
         TextEditor(text: $viewModel.content)
             .padding(.horizontal)
+            .autocorrectionDisabled()
             .navigationTitle(viewModel.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -204,4 +204,3 @@ FoldersListView (root)
 - Rich text formatting
 - Checklists
 - Attachments
-- Locked notes

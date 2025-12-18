@@ -71,9 +71,6 @@ struct NotesListView: View {
         .onAppear {
             notesViewModel.loadNotes(for: folder.id)
         }
-        .navigationDestination(for: Note.self) { note in
-            NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
-        }
         .navigationDestination(item: $newNoteToEdit) { note in
             NoteEditorView(note: note, folderName: folder.name, notesViewModel: notesViewModel)
         }
