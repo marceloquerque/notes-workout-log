@@ -6,16 +6,30 @@
 //
 
 import Foundation
+import SwiftData
 
-struct Folder: Identifiable, Codable, Hashable {
-    let id: UUID
+@Model
+final class Folder {
+    @Attribute(.unique) var id: UUID
     var name: String
-    let isSystemFolder: Bool
+    var isSystemFolder: Bool
+    var createdAt: Date
+    var updatedAt: Date
     
-    init(id: UUID = UUID(), name: String, isSystemFolder: Bool = false) {
+    @Relationship(deleteRule: .cascade, inverse: \Note.folder)
+    var notes: [Note] = []
+    
+    init(
+        id: UUID = UUID(),
+        name: String,
+        isSystemFolder: Bool = false,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
+    ) {
         self.id = id
         self.name = name
         self.isSystemFolder = isSystemFolder
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }
-

@@ -6,12 +6,35 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct notes_workout_logApp: App {
+    let modelContainer: ModelContainer
+    let notesStore: NotesStore
+    
+    init() {
+        do {
+            let schema = Schema([Folder.self, Note.self])
+            let modelConfiguration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false
+            )
+            modelContainer = try ModelContainer(
+                for: schema,
+                configurations: [modelConfiguration]
+            )
+            notesStore = NotesStore(modelContext: modelContainer.mainContext)
+        } catch {
+            fatalError("Failed to initialize ModelContainer: \(error)")
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(notesStore)
         }
+        .modelContainer(modelContainer)
     }
 }

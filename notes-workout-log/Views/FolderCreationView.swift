@@ -6,17 +6,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct FolderCreationView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(NotesStore.self) private var store
     @State private var folderName: String = ""
-    let foldersViewModel: FoldersViewModel
     
     var body: some View {
         NavigationStack {
             Form {
                 TextField("Folder Name", text: $folderName)
-                    .autocapitalization(.words)
+                    .textInputAutocapitalization(.words)
             }
             .navigationTitle("New Folder")
             .navigationBarTitleDisplayMode(.inline)
@@ -28,8 +29,9 @@ struct FolderCreationView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        if !folderName.trimmingCharacters(in: .whitespaces).isEmpty {
-                            foldersViewModel.createFolder(name: folderName.trimmingCharacters(in: .whitespaces))
+                        let trimmed = folderName.trimmingCharacters(in: .whitespaces)
+                        if !trimmed.isEmpty {
+                            store.createFolder(name: trimmed)
                             dismiss()
                         }
                     }
@@ -41,6 +43,6 @@ struct FolderCreationView: View {
 }
 
 #Preview {
-    FolderCreationView(foldersViewModel: FoldersViewModel())
+    FolderCreationView()
+        .environment(NotesStore(modelContext: ModelContext(try! ModelContainer(for: Folder.self, Note.self))))
 }
-

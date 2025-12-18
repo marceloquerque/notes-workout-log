@@ -6,13 +6,16 @@
 //
 
 import Foundation
+import SwiftData
 
-struct Note: Identifiable, Codable, Hashable {
-    let id: UUID
+@Model
+final class Note {
+    @Attribute(.unique) var id: UUID
     var content: String
-    let folderId: UUID
-    let sortDate: Date
-    let createdDate: Date
+    var createdAt: Date
+    var updatedAt: Date
+    
+    var folder: Folder?
     
     var title: String {
         let lines = content.components(separatedBy: .newlines)
@@ -31,11 +34,17 @@ struct Note: Identifiable, Codable, Hashable {
             .joined(separator: " ")
     }
     
-    init(id: UUID = UUID(), content: String = "", folderId: UUID, sortDate: Date? = nil, createdDate: Date? = nil) {
+    init(
+        id: UUID = UUID(),
+        content: String = "",
+        folder: Folder? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
+    ) {
         self.id = id
         self.content = content
-        self.folderId = folderId
-        self.sortDate = sortDate ?? Date()
-        self.createdDate = createdDate ?? Date()
+        self.folder = folder
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }

@@ -201,4 +201,3 @@ FoldersListView (root)
 - All Notes smart folder
 - Folder deletion
 - "Edit" button (multi-select/reorder mode)
-- Rich text formatting

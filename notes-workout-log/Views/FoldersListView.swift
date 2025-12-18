@@ -6,37 +6,38 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct FoldersListView: View {
-    @State private var foldersViewModel = FoldersViewModel()
-    @State private var notesViewModel = NotesViewModel()
+    @Environment(NotesStore.self) private var store
+    @Query(sort: \Folder.createdAt) private var folders: [Folder]
     @State private var showFolderCreation = false
     @State private var searchText: String = ""
     @State private var navigationPath = NavigationPath()
     
+    private var filteredFolders: [Folder] {
+        if searchText.isEmpty {
+            return folders
+        }
+        return folders.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
     var body: some View {
         NavigationStack(path: $navigationPath) {
             Group {
-                if foldersViewModel.filteredFolders.isEmpty && !searchText.isEmpty {
+                if filteredFolders.isEmpty && !searchText.isEmpty {
                     EmptyStateView(message: "No Folders")
-                } else if foldersViewModel.folders.isEmpty {
+                } else if folders.isEmpty {
                     EmptyStateView(message: "No Folders")
                 } else {
                     List {
                         Section("On My iPhone") {
-                            ForEach(foldersViewModel.filteredFolders) { folder in
+                            ForEach(filteredFolders) { folder in
                                 NavigationLink(value: folder) {
-                                    HStack {
-                                        Image(systemName: "folder.fill")
-                                            .foregroundStyle(.yellow)
-                                        Text(folder.name)
-                                        Spacer()
-                                        Text("\(notesViewModel.getNoteCount(for: folder.id))")
-                                            .foregroundStyle(.secondary)
-                                            .font(.subheadline)
-                                    }
+                                    FolderRow(folder: folder)
                                 }
                             }
+                            .onDelete(perform: deleteFolders)
                         }
                     }
                 }
@@ -55,36 +56,55 @@ struct FoldersListView: View {
                     HStack {
                         Spacer()
                         Button {
-                            if let defaultFolder = foldersViewModel.folders.first {
-                                notesViewModel.loadNotes(for: defaultFolder.id)
-                                let note = notesViewModel.createNote()
+                            if let defaultFolder = folders.first,
+                               let note = store.createNote(in: defaultFolder) {
                                 navigationPath.append(note)
                             }
                         } label: {
                             Image(systemName: "square.and.pencil")
                         }
-                        .disabled(foldersViewModel.folders.isEmpty)
+                        .disabled(folders.isEmpty)
                     }
                 }
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .onChange(of: searchText) { oldValue, newValue in
-                foldersViewModel.searchText = newValue
-            }
             .sheet(isPresented: $showFolderCreation) {
-                FolderCreationView(foldersViewModel: foldersViewModel)
+                FolderCreationView()
             }
             .navigationDestination(for: Folder.self) { folder in
-                NotesListView(folder: folder, foldersViewModel: foldersViewModel, notesViewModel: notesViewModel)
+                NotesListView(folder: folder)
             }
             .navigationDestination(for: Note.self) { note in
-                NoteEditorView(note: note, notesViewModel: notesViewModel)
+                NoteEditorView(note: note)
             }
+        }
+    }
+    
+    private func deleteFolders(at offsets: IndexSet) {
+        for index in offsets {
+            store.deleteFolder(filteredFolders[index])
+        }
+    }
+}
+
+private struct FolderRow: View {
+    let folder: Folder
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "folder.fill")
+                .foregroundStyle(.yellow)
+            Text(folder.name)
+            Spacer()
+            Text("\(folder.notes.count)")
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
         }
     }
 }
 
 #Preview {
     FoldersListView()
+        .modelContainer(for: [Folder.self, Note.self], inMemory: true)
+        .environment(NotesStore(modelContext: ModelContext(try! ModelContainer(for: Folder.self, Note.self))))
 }
-
