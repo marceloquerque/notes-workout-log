@@ -14,6 +14,7 @@ struct FoldersListView: View {
     @State private var showFolderCreation = false
     @State private var searchText: String = ""
     @State private var navigationPath = NavigationPath()
+    @State private var folderToDelete: Folder?
     
     private var filteredFolders: [Folder] {
         if searchText.isEmpty {
@@ -77,12 +78,29 @@ struct FoldersListView: View {
             .navigationDestination(for: Note.self) { note in
                 NoteEditorView(note: note)
             }
+            .confirmationDialog(
+                "Delete \(folderToDelete?.name ?? "")?",
+                isPresented: Binding(
+                    get: { folderToDelete != nil },
+                    set: { if !$0 { folderToDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let folder = folderToDelete {
+                        store.deleteFolder(folder)
+                    }
+                    folderToDelete = nil
+                }
+            } message: {
+                Text("This will delete all \(folderToDelete?.notes.count ?? 0) notes in this folder.")
+            }
         }
     }
     
     private func deleteFolders(at offsets: IndexSet) {
         for index in offsets {
-            store.deleteFolder(filteredFolders[index])
+            folderToDelete = filteredFolders[index]
         }
     }
 }
