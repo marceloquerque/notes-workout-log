@@ -17,7 +17,9 @@ struct FoldersListView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             Group {
-                if foldersViewModel.filteredFolders.isEmpty {
+                if foldersViewModel.filteredFolders.isEmpty && !searchText.isEmpty {
+                    EmptyStateView(message: "No Folders")
+                } else if foldersViewModel.folders.isEmpty {
                     EmptyStateView(message: "No Folders")
                 } else {
                     List {

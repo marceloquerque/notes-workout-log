@@ -39,4 +39,3 @@ struct Note: Identifiable, Codable, Hashable {
         self.createdDate = createdDate ?? Date()
     }
 }
-

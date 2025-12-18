@@ -112,4 +112,3 @@ final class NotesViewModel {
         UserDefaults.standard.set(encoded, forKey: notesKey)
     }
 }
-

@@ -34,4 +34,3 @@ final class NoteEditorViewModel {
         note = updatedNote
     }
 }
-

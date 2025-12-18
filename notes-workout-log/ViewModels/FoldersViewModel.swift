@@ -61,4 +61,3 @@ final class FoldersViewModel {
         UserDefaults.standard.set(encoded, forKey: foldersKey)
     }
 }
-

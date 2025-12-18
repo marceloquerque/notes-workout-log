@@ -202,5 +202,3 @@ FoldersListView (root)
 - Folder deletion
 - "Edit" button (multi-select/reorder mode)
 - Rich text formatting
-- Checklists
-- Attachments

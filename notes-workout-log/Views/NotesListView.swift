@@ -55,7 +55,6 @@ struct NotesListView: View {
                 HStack {
                     Spacer()
                     Button {
-                        notesViewModel.loadNotes(for: folder.id)
                         let note = notesViewModel.createNote()
                         newNoteToEdit = note
                     } label: {
@@ -72,6 +71,9 @@ struct NotesListView: View {
             notesViewModel.loadNotes(for: folder.id)
         }
         .navigationDestination(item: $newNoteToEdit) { note in
+            NoteEditorView(note: note, notesViewModel: notesViewModel)
+        }
+        .navigationDestination(for: Note.self) { note in
             NoteEditorView(note: note, notesViewModel: notesViewModel)
         }
     }
@@ -103,17 +105,15 @@ struct NotesListView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(note.title)
                     .font(.body)
-                    .fontWeight(.medium)
+                    .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 
-                HStack {
+                HStack(spacing: 4) {
                     Text(formatDate(note.sortDate))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
                     if !note.preview.isEmpty {
-                        Text("•")
-                            .foregroundStyle(.secondary)
                         Text(note.preview)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -146,4 +146,3 @@ struct NotesListView: View {
         )
     }
 }
-
