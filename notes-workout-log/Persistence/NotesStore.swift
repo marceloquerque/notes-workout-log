@@ -126,10 +126,17 @@ final class NotesStore {
         do {
             let folders = try modelContext.fetch(descriptor)
             if folders.isEmpty {
-                let defaultFolder = Folder(name: AppStrings.defaultFolderName)
+                let defaultFolder = Folder(name: AppStrings.defaultFolderName, isSystemFolder: true)
                 modelContext.insert(defaultFolder)
                 try modelContext.save()
                 logger.info("Created default folder")
+            } else if !folders.contains(where: { $0.isSystemFolder }) {
+                // Backfill: mark oldest folder as system folder
+                if let oldest = folders.min(by: { $0.createdAt < $1.createdAt }) {
+                    oldest.isSystemFolder = true
+                    try modelContext.save()
+                    logger.info("Marked '\(oldest.name)' as system folder")
+                }
             }
         } catch {
             logger.error("Failed to check/create default folder: \(error.localizedDescription)")

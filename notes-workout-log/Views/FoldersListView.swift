@@ -15,6 +15,9 @@ struct FoldersListView: View {
     @State private var searchText: String = ""
     @State private var navigationPath = NavigationPath()
     @State private var folderToDelete: Folder?
+    @State private var folderToRename: Folder?
+    @State private var renameText: String = ""
+    @State private var isRenameAlertPresented = false
     
     private var filteredFolders: [Folder] {
         if searchText.isEmpty {
@@ -37,6 +40,26 @@ struct FoldersListView: View {
                                 NavigationLink(value: folder) {
                                     FolderRow(folder: folder)
                                 }
+                                .contextMenu {
+                                    if !folder.isSystemFolder {
+                                        Button {
+                                            renameText = folder.name
+                                            folderToRename = folder
+                                            isRenameAlertPresented = true
+                                        } label: {
+                                            Label(AppStrings.rename, systemImage: "pencil")
+                                        }
+                                        
+                                        Divider()
+                                        
+                                        Button(role: .destructive) {
+                                            folderToDelete = folder
+                                        } label: {
+                                            Label(AppStrings.delete, systemImage: "trash")
+                                        }
+                                    }
+                                }
+                                .deleteDisabled(folder.isSystemFolder)
                             }
                             .onDelete(perform: deleteFolders)
                         }
@@ -94,6 +117,19 @@ struct FoldersListView: View {
                 }
             } message: {
                 Text("This will delete all \(folderToDelete?.notes.count ?? 0) notes in this folder.")
+            }
+            .alert(AppStrings.renameFolder, isPresented: $isRenameAlertPresented) {
+                TextField(AppStrings.folderNamePlaceholder, text: $renameText)
+                Button(AppStrings.cancel, role: .cancel) {
+                    folderToRename = nil
+                }
+                Button(AppStrings.rename) {
+                    let trimmed = renameText.trimmingCharacters(in: .whitespaces)
+                    if let folder = folderToRename, !trimmed.isEmpty {
+                        store.renameFolder(folder, to: trimmed)
+                    }
+                    folderToRename = nil
+                }
             }
         }
     }

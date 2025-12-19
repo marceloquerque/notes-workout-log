@@ -31,6 +31,7 @@ enum AppStrings {
     static let cancel = "Cancel"
     static let create = "Create"
     static let delete = "Delete"
+    static let rename = "Rename"
     static let share = "Share"
     static let copy = "Copy"
 
@@ -43,6 +44,7 @@ enum AppStrings {
     static let folders = "Folders"
     static let noFolders = "No Folders"
     static let newFolder = "New Folder"
+    static let renameFolder = "Rename Folder"
     static let folderNamePlaceholder = "Folder Name"
     static let createFolder = "Create Folder"
     static let onMyiPhone = "On My iPhone"
