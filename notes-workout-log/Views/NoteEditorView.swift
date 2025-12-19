@@ -11,6 +11,7 @@ import Combine
 
 struct NoteEditorView: View {
     @Environment(NotesStore.self) private var store
+    @Environment(TemplateStore.self) private var templateStore
     @Environment(\.dismiss) private var dismiss
     @Bindable var note: Note
     @State private var content: String
@@ -69,6 +70,19 @@ struct NoteEditorView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Menu(AppStrings.templates) {
+                            ForEach(templateStore.templates) { template in
+                                Button {
+                                    insertTemplate(template)
+                                } label: {
+                                    Text(template.name)
+                                }
+                            }
+                        }
+                        .disabled(!isNewNote)
+                        
+                        Divider()
+                        
                         Button(role: .destructive) {
                             store.deleteNote(note)
                             dismiss()
@@ -101,6 +115,11 @@ struct NoteEditorView: View {
         return trimmed.isEmpty ? AppStrings.newNoteTitle : trimmed
     }
     
+    private var isNewNote: Bool {
+        content.isEmpty && (titleDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                            titleDraft.trimmingCharacters(in: .whitespacesAndNewlines) == AppStrings.newNoteTitle)
+    }
+    
     private func commitTitle() {
         store.updateNoteTitle(note, title: titleDraft)
     }
@@ -123,6 +142,11 @@ struct NoteEditorView: View {
         store.updateNoteContent(note, content: content)
         store.save()
     }
+    
+    private func insertTemplate(_ template: WorkoutTemplate) {
+        content = template.content
+        scheduleDebouncedSave(template.content)
+    }
 }
 
 #Preview {
@@ -136,5 +160,6 @@ struct NoteEditorView: View {
         NoteEditorView(note: note)
             .modelContainer(container)
             .environment(NotesStore(modelContext: container.mainContext))
+            .environment(TemplateStore())
     }
 }

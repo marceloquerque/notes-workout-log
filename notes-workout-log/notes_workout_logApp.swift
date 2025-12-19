@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 private enum InitializationState {
-    case success(container: ModelContainer, store: NotesStore)
+    case success(container: ModelContainer, store: NotesStore, templateStore: TemplateStore)
     case failure(Error)
 }
 
@@ -30,7 +30,8 @@ struct notes_workout_logApp: App {
             )
             
             let store = NotesStore(modelContext: container.mainContext)
-            state = .success(container: container, store: store)
+            let templateStore = TemplateStore()
+            state = .success(container: container, store: store, templateStore: templateStore)
         } catch {
             state = .failure(error)
         }
@@ -39,9 +40,10 @@ struct notes_workout_logApp: App {
     var body: some Scene {
         WindowGroup {
             switch state {
-            case .success(let container, let store):
+            case .success(let container, let store, let templateStore):
                 ContentView()
                     .environment(store)
+                    .environment(templateStore)
                     .modelContainer(container)
             case .failure(let error):
                 DatabaseErrorView(error: error)

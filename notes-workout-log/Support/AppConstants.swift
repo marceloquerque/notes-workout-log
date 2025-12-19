@@ -47,6 +47,9 @@ enum AppStrings {
     static let createFolder = "Create Folder"
     static let onMyiPhone = "On My iPhone"
 
+    // MARK: Templates
+    static let templates = "Templates"
+
     // MARK: Errors
     enum Errors {
         static let defaultTitle = "Error"
