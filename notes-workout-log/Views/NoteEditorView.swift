@@ -144,6 +144,8 @@ struct NoteEditorView: View {
     }
     
     private func insertTemplate(_ template: WorkoutTemplate) {
+        titleDraft = template.name
+        commitTitle()
         content = template.content
         scheduleDebouncedSave(template.content)
     }
