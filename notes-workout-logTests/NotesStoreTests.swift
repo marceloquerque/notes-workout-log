@@ -76,6 +76,7 @@ final class NotesStoreTests: XCTestCase {
         
         XCTAssertNotNil(note)
         XCTAssertEqual(note?.folder?.id, folder?.id)
+        XCTAssertEqual(note?.title, "")
         XCTAssertEqual(note?.content, "")
     }
     
@@ -141,20 +142,50 @@ final class NotesStoreTests: XCTestCase {
         XCTAssertEqual(notes.count, 0)
     }
     
-    // MARK: - Computed Properties Tests
+    // MARK: - Title Tests
     
-    func testNoteTitle() throws {
+    func testDisplayTitleDefaultsToNewNote() throws {
         let folder = store.createFolder(name: "Test")!
         let note = store.createNote(in: folder)!
         
-        XCTAssertEqual(note.title, AppStrings.newNoteTitle)
-        
-        store.updateNoteContent(note, content: "My Title\nSome content here")
-        XCTAssertEqual(note.title, "My Title")
-        
-        store.updateNoteContent(note, content: "  \nContent only")
-        XCTAssertEqual(note.title, AppStrings.newNoteTitle)
+        XCTAssertEqual(note.title, "")
+        XCTAssertEqual(note.displayTitle, AppStrings.newNoteTitle)
     }
+    
+    func testDisplayTitleReturnsTrimmedTitle() throws {
+        let folder = store.createFolder(name: "Test")!
+        let note = store.createNote(in: folder)!
+        
+        store.updateNoteTitle(note, title: "  My Title  ")
+        XCTAssertEqual(note.displayTitle, "My Title")
+    }
+    
+    func testUpdateTitleDoesNotChangeContent() throws {
+        let folder = store.createFolder(name: "Test")!
+        let note = store.createNote(in: folder)!
+        
+        store.updateNoteContent(note, content: "Some content")
+        store.updateNoteTitle(note, title: "My Title")
+        
+        XCTAssertEqual(note.title, "My Title")
+        XCTAssertEqual(note.content, "Some content")
+    }
+    
+    func testUpdateNoteTitle() throws {
+        let folder = store.createFolder(name: "Test")!
+        let note = store.createNote(in: folder)!
+        let originalUpdatedAt = note.updatedAt
+        
+        Thread.sleep(forTimeInterval: 0.01)
+        
+        store.updateNoteTitle(note, title: "New Title")
+        store.save()
+        
+        XCTAssertEqual(note.title, "New Title")
+        XCTAssertGreaterThan(note.updatedAt, originalUpdatedAt)
+    }
+    
+    // MARK: - Preview Tests
     
     func testNotePreview() throws {
         let folder = store.createFolder(name: "Test")!
@@ -162,11 +193,19 @@ final class NotesStoreTests: XCTestCase {
         
         XCTAssertEqual(note.preview, "")
         
-        store.updateNoteContent(note, content: "Title\nFirst line\nSecond line\nThird line")
+        store.updateNoteContent(note, content: "First line\nSecond line\nThird line")
         XCTAssertEqual(note.preview, "First line Second line")
         
-        store.updateNoteContent(note, content: "Title Only")
-        XCTAssertEqual(note.preview, "")
+        store.updateNoteContent(note, content: "Only one line")
+        XCTAssertEqual(note.preview, "Only one line")
+    }
+    
+    func testNotePreviewSkipsEmptyLines() throws {
+        let folder = store.createFolder(name: "Test")!
+        let note = store.createNote(in: folder)!
+        
+        store.updateNoteContent(note, content: "  \nActual content\nMore content")
+        XCTAssertEqual(note.preview, "Actual content More content")
     }
     
     // MARK: - Default Folder Tests

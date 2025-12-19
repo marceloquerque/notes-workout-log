@@ -11,23 +11,21 @@ import SwiftData
 @Model
 final class Note {
     @Attribute(.unique) var id: UUID
+    var title: String
     var content: String
     var createdAt: Date
     var updatedAt: Date
     
     var folder: Folder?
     
-    var title: String {
-        let lines = content.components(separatedBy: .newlines)
-        let firstLine = lines.first?.trimmingCharacters(in: .whitespaces) ?? ""
-        return firstLine.isEmpty ? AppStrings.newNoteTitle : firstLine
+    var displayTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? AppStrings.newNoteTitle : trimmed
     }
     
     var preview: String {
         let lines = content.components(separatedBy: .newlines)
-        guard lines.count > 1 else { return "" }
-        
-        let previewLines = Array(lines[1...]).prefix(2)
+        let previewLines = lines.prefix(2)
         return previewLines
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
@@ -36,12 +34,14 @@ final class Note {
     
     init(
         id: UUID = UUID(),
+        title: String = "",
         content: String = "",
         folder: Folder? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
         self.id = id
+        self.title = title
         self.content = content
         self.folder = folder
         self.createdAt = createdAt

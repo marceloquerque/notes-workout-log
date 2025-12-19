@@ -14,24 +14,21 @@ struct NoteEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var note: Note
     @State private var content: String
+    @State private var titleDraft: String
+    @State private var isEditingTitle: Bool = false
     @State private var saveTask: Task<Void, Never>?
+    @FocusState private var titleFieldFocused: Bool
     
     init(note: Note) {
         self.note = note
         self._content = State(initialValue: note.content)
-    }
-    
-    private var title: String {
-        let lines = content.components(separatedBy: .newlines)
-        let firstLine = lines.first?.trimmingCharacters(in: .whitespaces) ?? ""
-        return firstLine.isEmpty ? AppStrings.newNoteTitle : firstLine
+        self._titleDraft = State(initialValue: note.title)
     }
     
     var body: some View {
         TextEditor(text: $content)
             .padding(.horizontal)
             .autocorrectionDisabled()
-            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -48,6 +45,27 @@ struct NoteEditorView: View {
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
+                }
+                ToolbarItem(placement: .principal) {
+                    if isEditingTitle {
+                        TextField(AppStrings.newNoteTitle, text: $titleDraft)
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                            .submitLabel(.done)
+                            .focused($titleFieldFocused)
+                            .onSubmit {
+                                commitTitle()
+                                isEditingTitle = false
+                            }
+                    } else {
+                        Text(displayTitle)
+                            .font(.headline)
+                            .onLongPressGesture {
+                                titleDraft = note.title
+                                isEditingTitle = true
+                                titleFieldFocused = true
+                            }
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -78,6 +96,15 @@ struct NoteEditorView: View {
             }
     }
     
+    private var displayTitle: String {
+        let trimmed = titleDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? AppStrings.newNoteTitle : trimmed
+    }
+    
+    private func commitTitle() {
+        store.updateNoteTitle(note, title: titleDraft)
+    }
+    
     private func scheduleDebouncedSave(_ newContent: String) {
         saveTask?.cancel()
         saveTask = Task {
@@ -92,6 +119,7 @@ struct NoteEditorView: View {
     
     private func saveImmediately() {
         saveTask?.cancel()
+        commitTitle()
         store.updateNoteContent(note, content: content)
         store.save()
     }
@@ -100,7 +128,7 @@ struct NoteEditorView: View {
 #Preview {
     let container = try! ModelContainer(for: Folder.self, Note.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     let folder = Folder(name: AppStrings.defaultFolderName)
-    let note = Note(content: "Sample note", folder: folder)
+    let note = Note(title: "Sample Title", content: "Sample note", folder: folder)
     container.mainContext.insert(folder)
     container.mainContext.insert(note)
     

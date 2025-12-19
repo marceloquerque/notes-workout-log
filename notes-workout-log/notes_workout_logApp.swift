@@ -29,9 +29,6 @@ struct notes_workout_logApp: App {
                 configurations: [modelConfiguration]
             )
             
-            // Migrate legacy UserDefaults data if needed
-            DataMigrator.migrateIfNeeded(context: container.mainContext)
-            
             let store = NotesStore(modelContext: container.mainContext)
             state = .success(container: container, store: store)
         } catch {

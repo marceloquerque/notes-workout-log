@@ -32,6 +32,7 @@ struct NotesListView: View {
             return notes
         }
         return notes.filter { note in
+            note.displayTitle.localizedCaseInsensitiveContains(searchText) ||
             note.title.localizedCaseInsensitiveContains(searchText) ||
             note.content.localizedCaseInsensitiveContains(searchText)
         }
@@ -163,7 +164,7 @@ private struct NoteRow: View {
     var body: some View {
         NavigationLink(value: note) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(note.title)
+                Text(note.displayTitle)
                     .font(.body)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)

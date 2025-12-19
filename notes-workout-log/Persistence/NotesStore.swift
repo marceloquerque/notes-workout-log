@@ -81,11 +81,16 @@ final class NotesStore {
         
         do {
             try modelContext.save()
-            logger.info("Deleted note: \(note.title)")
+            logger.info("Deleted note: \(note.displayTitle)")
         } catch {
             logger.error("Failed to delete note: \(error.localizedDescription)")
             alert = AppAlert(error: .deleteFailed(underlying: error))
         }
+    }
+    
+    func updateNoteTitle(_ note: Note, title: String) {
+        note.title = title
+        note.updatedAt = Date()
     }
     
     func updateNoteContent(_ note: Note, content: String) {
