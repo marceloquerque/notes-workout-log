@@ -13,29 +13,19 @@ struct FoldersListView: View {
     @Query(sort: \Folder.createdAt) private var folders: [Folder]
     @Binding var navigationPath: NavigationPath
     @State private var showFolderCreation = false
-    @State private var searchText: String = ""
     @State private var folderToDelete: Folder?
     @State private var folderToRename: Folder?
     @State private var renameText: String = ""
     @State private var isRenameAlertPresented = false
     
-    private var filteredFolders: [Folder] {
-        if searchText.isEmpty {
-            return folders
-        }
-        return folders.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
-    
     var body: some View {
         Group {
-            if filteredFolders.isEmpty && !searchText.isEmpty {
-                EmptyStateView(message: AppStrings.noFolders)
-            } else if folders.isEmpty {
+            if folders.isEmpty {
                 EmptyStateView(message: AppStrings.noFolders)
             } else {
                 List {
                     Section(AppStrings.onMyiPhone) {
-                        ForEach(filteredFolders) { folder in
+                        ForEach(folders) { folder in
                             NavigationLink(value: folder) {
                                 FolderRow(folder: folder)
                             }
@@ -86,7 +76,6 @@ struct FoldersListView: View {
                 }
             }
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
         .sheet(isPresented: $showFolderCreation) {
             FolderCreationView()
         }
