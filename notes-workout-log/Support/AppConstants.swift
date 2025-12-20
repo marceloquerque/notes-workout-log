@@ -47,7 +47,7 @@ enum AppStrings {
     static let renameFolder = "Rename Folder"
     static let folderNamePlaceholder = "Folder Name"
     static let createFolder = "Create Folder"
-    static let onMyiPhone = "On My iPhone"
+    static let onMyiPhone = "Logbook"
 
     // MARK: Templates
     static let templates = "Templates"

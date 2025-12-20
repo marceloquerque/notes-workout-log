@@ -11,9 +11,9 @@ import SwiftData
 struct FoldersListView: View {
     @Environment(NotesStore.self) private var store
     @Query(sort: \Folder.createdAt) private var folders: [Folder]
+    @Binding var navigationPath: NavigationPath
     @State private var showFolderCreation = false
     @State private var searchText: String = ""
-    @State private var navigationPath = NavigationPath()
     @State private var folderToDelete: Folder?
     @State private var folderToRename: Folder?
     @State private var renameText: String = ""
@@ -27,116 +27,98 @@ struct FoldersListView: View {
     }
     
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            Group {
-                if filteredFolders.isEmpty && !searchText.isEmpty {
-                    EmptyStateView(message: AppStrings.noFolders)
-                } else if folders.isEmpty {
-                    EmptyStateView(message: AppStrings.noFolders)
-                } else {
-                    List {
-                        Section(AppStrings.onMyiPhone) {
-                            ForEach(filteredFolders) { folder in
-                                NavigationLink(value: folder) {
-                                    FolderRow(folder: folder)
-                                }
-                                .contextMenu {
-                                    if !folder.isSystemFolder {
-                                        Button {
-                                            renameText = folder.name
-                                            folderToRename = folder
-                                            isRenameAlertPresented = true
-                                        } label: {
-                                            Label(AppStrings.rename, systemImage: "pencil")
-                                        }
-                                        
-                                        Divider()
-                                        
-                                        Button(role: .destructive) {
-                                            folderToDelete = folder
-                                        } label: {
-                                            Label(AppStrings.delete, systemImage: "trash")
-                                        }
+        Group {
+            if filteredFolders.isEmpty && !searchText.isEmpty {
+                EmptyStateView(message: AppStrings.noFolders)
+            } else if folders.isEmpty {
+                EmptyStateView(message: AppStrings.noFolders)
+            } else {
+                List {
+                    Section(AppStrings.onMyiPhone) {
+                        ForEach(filteredFolders) { folder in
+                            NavigationLink(value: folder) {
+                                FolderRow(folder: folder)
+                            }
+                            .contextMenu {
+                                if !folder.isSystemFolder {
+                                    Button {
+                                        renameText = folder.name
+                                        folderToRename = folder
+                                        isRenameAlertPresented = true
+                                    } label: {
+                                        Label(AppStrings.rename, systemImage: "pencil")
+                                    }
+                                    
+                                    Divider()
+                                    
+                                    Button(role: .destructive) {
+                                        folderToDelete = folder
+                                    } label: {
+                                        Label(AppStrings.delete, systemImage: "trash")
                                     }
                                 }
-                                .deleteDisabled(folder.isSystemFolder)
                             }
-                            .onDelete(perform: deleteFolders)
                         }
                     }
-                }
-            }
-            .navigationTitle(AppStrings.folders)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showFolderCreation = true
-                    } label: {
-                        Image(systemName: "folder.badge.plus")
-                    }
-                }
-                ToolbarItem(placement: .bottomBar) {
-                    HStack {
-                        Spacer()
-                        Button {
-                            if let defaultFolder = folders.first,
-                               let note = store.createNote(in: defaultFolder) {
-                                navigationPath.append(note)
-                            }
-                        } label: {
-                            Image(systemName: "square.and.pencil")
-                        }
-                        .disabled(folders.isEmpty)
-                    }
-                }
-            }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .sheet(isPresented: $showFolderCreation) {
-                FolderCreationView()
-            }
-            .navigationDestination(for: Folder.self) { folder in
-                NotesListView(folder: folder)
-            }
-            .navigationDestination(for: Note.self) { note in
-                NoteEditorView(note: note)
-            }
-            .confirmationDialog(
-                "Delete \(folderToDelete?.name ?? "")?",
-                isPresented: Binding(
-                    get: { folderToDelete != nil },
-                    set: { if !$0 { folderToDelete = nil } }
-                ),
-                titleVisibility: .visible
-            ) {
-                Button("Delete", role: .destructive) {
-                    if let folder = folderToDelete {
-                        store.deleteFolder(folder)
-                    }
-                    folderToDelete = nil
-                }
-            } message: {
-                Text("This will delete all \(folderToDelete?.notes.count ?? 0) notes in this folder.")
-            }
-            .alert(AppStrings.renameFolder, isPresented: $isRenameAlertPresented) {
-                TextField(AppStrings.folderNamePlaceholder, text: $renameText)
-                Button(AppStrings.cancel, role: .cancel) {
-                    folderToRename = nil
-                }
-                Button(AppStrings.rename) {
-                    let trimmed = renameText.trimmingCharacters(in: .whitespaces)
-                    if let folder = folderToRename, !trimmed.isEmpty {
-                        store.renameFolder(folder, to: trimmed)
-                    }
-                    folderToRename = nil
                 }
             }
         }
-    }
-    
-    private func deleteFolders(at offsets: IndexSet) {
-        for index in offsets {
-            folderToDelete = filteredFolders[index]
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showFolderCreation = true
+                } label: {
+                    Image(systemName: "folder.badge.plus")
+                }
+            }
+            ToolbarItem(placement: .bottomBar) {
+                HStack {
+                    Spacer()
+                    Button {
+                        if let defaultFolder = folders.first,
+                           let note = store.createNote(in: defaultFolder) {
+                            navigationPath.append(note)
+                        }
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .disabled(folders.isEmpty)
+                }
+            }
+        }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+        .sheet(isPresented: $showFolderCreation) {
+            FolderCreationView()
+        }
+        .confirmationDialog(
+            "Delete \(folderToDelete?.name ?? "")?",
+            isPresented: Binding(
+                get: { folderToDelete != nil },
+                set: { if !$0 { folderToDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let folder = folderToDelete {
+                    store.deleteFolder(folder)
+                }
+                folderToDelete = nil
+            }
+        } message: {
+            Text("This will delete all \(folderToDelete?.notes.count ?? 0) notes in this folder.")
+        }
+        .alert(AppStrings.renameFolder, isPresented: $isRenameAlertPresented) {
+            TextField(AppStrings.folderNamePlaceholder, text: $renameText)
+            Button(AppStrings.cancel, role: .cancel) {
+                folderToRename = nil
+            }
+            Button(AppStrings.rename) {
+                let trimmed = renameText.trimmingCharacters(in: .whitespaces)
+                if let folder = folderToRename, !trimmed.isEmpty {
+                    store.renameFolder(folder, to: trimmed)
+                }
+                folderToRename = nil
+            }
         }
     }
 }
@@ -158,7 +140,10 @@ private struct FolderRow: View {
 }
 
 #Preview {
-    FoldersListView()
-        .modelContainer(for: [Folder.self, Note.self], inMemory: true)
-        .environment(NotesStore(modelContext: ModelContext(try! ModelContainer(for: Folder.self, Note.self))))
+    @Previewable @State var path = NavigationPath()
+    NavigationStack(path: $path) {
+        FoldersListView(navigationPath: $path)
+            .modelContainer(for: [Folder.self, Note.self], inMemory: true)
+            .environment(NotesStore(modelContext: ModelContext(try! ModelContainer(for: Folder.self, Note.self))))
+    }
 }
