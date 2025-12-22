@@ -203,5 +203,3 @@ Auto-save triggers via existing debounced save mechanism
 - Add more template types (Push/Pull/Legs, Cardio, etc.)
 
 ## Notes
-
-- Templates only work on new notes to preserve the "free-form" editing experience

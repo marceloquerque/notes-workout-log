@@ -128,4 +128,3 @@ After installing a build with the new `Note.title` field, **delete the app** fro
 - `model_title_field`: Add stored `title` + `displayTitle`; update `preview` semantics in `Note`
 - `store_title_api`: Add title update API and adjust create/logging in `NotesStore`
 - `editor_nav_title`: Implement long-press-to-edit nav title (principal toolbar) + save-on-back/disappear
-- `list_search_title`: Update `NotesListView` row + search to use stored title
