@@ -28,8 +28,8 @@ struct ContentView: View {
     var body: some View {
         @Bindable var store = store
         
-        NavigationStack(path: $navigationPath) {
-            ZStack(alignment: .bottomTrailing) {
+        ZStack(alignment: .bottomTrailing) {
+            NavigationStack(path: $navigationPath) {
                 TabView(selection: $tab) {
                     FoldersListView(navigationPath: $navigationPath)
                         .tag(RootTab.logbook)
@@ -38,34 +38,34 @@ struct ContentView: View {
                         .tag(RootTab.calendar)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                
-                FloatingComposeButton(
-                    onCompose: composeNote,
-                    isEnabled: !folders.isEmpty,
-                    isVisible: !isEditingNote
-                )
-                .padding(.trailing, 20)
-                .padding(.bottom, 20)
-                .safeAreaPadding(.bottom)
-            }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Picker("Tab", selection: $tab) {
-                        ForEach(RootTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Picker("Tab", selection: $tab) {
+                            ForEach(RootTab.allCases, id: \.self) { tab in
+                                Text(tab.rawValue).tag(tab)
+                            }
                         }
+                        .pickerStyle(.segmented)
+                        .frame(width: 200)
                     }
-                    .pickerStyle(.segmented)
-                    .frame(width: 200)
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: Folder.self) { folder in
+                    NotesListView(folder: folder, activeComposeFolder: $activeComposeFolder)
+                }
+                .navigationDestination(for: Note.self) { note in
+                    NoteEditorView(note: note, isEditingNote: $isEditingNote)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: Folder.self) { folder in
-                NotesListView(folder: folder, activeComposeFolder: $activeComposeFolder)
-            }
-            .navigationDestination(for: Note.self) { note in
-                NoteEditorView(note: note, isEditingNote: $isEditingNote)
-            }
+            
+            FloatingComposeButton(
+                onCompose: composeNote,
+                isEnabled: !folders.isEmpty,
+                isVisible: !isEditingNote
+            )
+            .padding(.trailing, 20)
+            .padding(.bottom, 20)
+            .safeAreaPadding(.bottom)
         }
         .alert(
             item: $store.alert
