@@ -13,11 +13,12 @@ struct NotesListView: View {
     @Query private var notes: [Note]
     
     let folder: Folder
+    @Binding var activeComposeFolder: Folder?
     @State private var searchText: String = ""
-    @State private var newNoteToEdit: Note?
     
-    init(folder: Folder) {
+    init(folder: Folder, activeComposeFolder: Binding<Folder?>) {
         self.folder = folder
+        self._activeComposeFolder = activeComposeFolder
         let folderId = folder.id
         _notes = Query(
             filter: #Predicate<Note> { note in
@@ -101,25 +102,15 @@ struct NotesListView: View {
                     Image(systemName: "ellipsis.circle")
                 }
             }
-            ToolbarItem(placement: .bottomBar) {
-                HStack {
-                    Spacer()
-                    Button {
-                        if let note = store.createNote(in: folder) {
-                            newNoteToEdit = note
-                        }
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                    }
-                }
-            }
         }
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-        .navigationDestination(item: $newNoteToEdit) { note in
-            NoteEditorView(note: note)
+        .onAppear {
+            activeComposeFolder = folder
         }
-        .navigationDestination(for: Note.self) { note in
-            NoteEditorView(note: note)
+        .onDisappear {
+            if activeComposeFolder?.id == folder.id {
+                activeComposeFolder = nil
+            }
         }
     }
     
@@ -187,8 +178,9 @@ private struct NoteRow: View {
 }
 
 #Preview {
+    @Previewable @State var activeComposeFolder: Folder?
     NavigationStack {
-        NotesListView(folder: Folder(name: AppStrings.defaultFolderName))
+        NotesListView(folder: Folder(name: AppStrings.defaultFolderName), activeComposeFolder: $activeComposeFolder)
             .modelContainer(for: [Folder.self, Note.self], inMemory: true)
             .environment(NotesStore(modelContext: ModelContext(try! ModelContainer(for: Folder.self, Note.self))))
     }

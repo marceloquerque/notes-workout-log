@@ -45,6 +45,7 @@ struct notes_workout_logApp: App {
                     .environment(store)
                     .environment(templateStore)
                     .modelContainer(container)
+                    .tint(Color(uiColor: .systemYellow))
             case .failure(let error):
                 DatabaseErrorView(error: error)
             }

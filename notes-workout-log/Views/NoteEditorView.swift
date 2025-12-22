@@ -14,14 +14,16 @@ struct NoteEditorView: View {
     @Environment(TemplateStore.self) private var templateStore
     @Environment(\.dismiss) private var dismiss
     @Bindable var note: Note
+    @Binding var isEditingNote: Bool
     @State private var content: String
     @State private var titleDraft: String
     @State private var isEditingTitle: Bool = false
     @State private var saveTask: Task<Void, Never>?
     @FocusState private var titleFieldFocused: Bool
     
-    init(note: Note) {
+    init(note: Note, isEditingNote: Binding<Bool>) {
         self.note = note
+        self._isEditingNote = isEditingNote
         self._content = State(initialValue: note.content)
         self._titleDraft = State(initialValue: note.title)
     }
@@ -104,7 +106,11 @@ struct NoteEditorView: View {
             .onChange(of: content) { _, newValue in
                 scheduleDebouncedSave(newValue)
             }
+            .onAppear {
+                isEditingNote = true
+            }
             .onDisappear {
+                isEditingNote = false
                 saveTask?.cancel()
                 saveImmediately()
             }
@@ -152,6 +158,7 @@ struct NoteEditorView: View {
 }
 
 #Preview {
+    @Previewable @State var isEditingNote = false
     let container = try! ModelContainer(for: Folder.self, Note.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     let folder = Folder(name: AppStrings.defaultFolderName)
     let note = Note(title: "Sample Title", content: "Sample note", folder: folder)
@@ -159,7 +166,7 @@ struct NoteEditorView: View {
     container.mainContext.insert(note)
     
     return NavigationStack {
-        NoteEditorView(note: note)
+        NoteEditorView(note: note, isEditingNote: $isEditingNote)
             .modelContainer(container)
             .environment(NotesStore(modelContext: container.mainContext))
             .environment(TemplateStore())

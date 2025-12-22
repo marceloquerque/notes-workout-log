@@ -15,21 +15,39 @@ enum RootTab: String, CaseIterable, Hashable {
 
 struct ContentView: View {
     @Environment(NotesStore.self) private var store
+    @Query(sort: \Folder.createdAt) private var folders: [Folder]
     @State private var tab: RootTab = .logbook
     @State private var navigationPath = NavigationPath()
+    @State private var activeComposeFolder: Folder?
+    @State private var isEditingNote: Bool = false
+    
+    private var defaultFolder: Folder? {
+        folders.first(where: { $0.isSystemFolder }) ?? folders.first
+    }
     
     var body: some View {
         @Bindable var store = store
         
         NavigationStack(path: $navigationPath) {
-            TabView(selection: $tab) {
-                FoldersListView(navigationPath: $navigationPath)
-                    .tag(RootTab.logbook)
+            ZStack(alignment: .bottomTrailing) {
+                TabView(selection: $tab) {
+                    FoldersListView(navigationPath: $navigationPath)
+                        .tag(RootTab.logbook)
+                    
+                    CalendarView()
+                        .tag(RootTab.calendar)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 
-                CalendarView()
-                    .tag(RootTab.calendar)
+                FloatingComposeButton(
+                    onCompose: composeNote,
+                    isEnabled: !folders.isEmpty,
+                    isVisible: !isEditingNote
+                )
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
+                .safeAreaPadding(.bottom)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Picker("Tab", selection: $tab) {
@@ -43,10 +61,10 @@ struct ContentView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: Folder.self) { folder in
-                NotesListView(folder: folder)
+                NotesListView(folder: folder, activeComposeFolder: $activeComposeFolder)
             }
             .navigationDestination(for: Note.self) { note in
-                NoteEditorView(note: note)
+                NoteEditorView(note: note, isEditingNote: $isEditingNote)
             }
         }
         .alert(
@@ -58,6 +76,13 @@ struct ContentView: View {
                 dismissButton: .default(Text(AppStrings.ok))
             )
         }
+    }
+    
+    private func composeNote() {
+        let targetFolder = activeComposeFolder ?? defaultFolder
+        guard let folder = targetFolder,
+              let note = store.createNote(in: folder) else { return }
+        navigationPath.append(note)
     }
 }
 

@@ -61,20 +61,6 @@ struct FoldersListView: View {
                     Image(systemName: "folder.badge.plus")
                 }
             }
-            ToolbarItem(placement: .bottomBar) {
-                HStack {
-                    Spacer()
-                    Button {
-                        if let defaultFolder = folders.first,
-                           let note = store.createNote(in: defaultFolder) {
-                            navigationPath.append(note)
-                        }
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                    }
-                    .disabled(folders.isEmpty)
-                }
-            }
         }
         .sheet(isPresented: $showFolderCreation) {
             FolderCreationView()
