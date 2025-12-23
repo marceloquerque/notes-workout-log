@@ -20,6 +20,10 @@ struct ContentView: View {
     @State private var navigationPath = NavigationPath()
     @State private var activeComposeFolder: Folder?
     @State private var isEditingNote: Bool = false
+    /// Tracks the note created via Compose button for auto-deletion logic.
+    /// Uses session-only UUID tracking (not persisted in model) to avoid schema pollution.
+    /// Draft status is intentionally lost on app termination (matching iOS Notes behavior).
+    /// NotesStore.cleanupEmptyNotes() handles orphaned empty drafts on next cold start.
     @State private var draftNoteID: UUID?
     
     private var defaultFolder: Folder? {

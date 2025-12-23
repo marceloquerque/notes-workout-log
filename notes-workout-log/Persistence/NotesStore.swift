@@ -20,6 +20,7 @@ final class NotesStore {
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         ensureDefaultFolderExists()
+        cleanupEmptyNotes()
     }
     
     // MARK: - Folder Operations
@@ -140,6 +141,34 @@ final class NotesStore {
             }
         } catch {
             logger.error("Failed to check/create default folder: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Removes notes with empty content and title left behind by app crashes or force-quits.
+    /// Called on cold start only to avoid deleting an in-progress empty note the user is editing.
+    private func cleanupEmptyNotes() {
+        let descriptor = FetchDescriptor<Note>()
+        
+        do {
+            let notes = try modelContext.fetch(descriptor)
+            var deletedCount = 0
+            
+            for note in notes {
+                let trimmedContent = note.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedTitle = note.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                if trimmedContent.isEmpty && trimmedTitle.isEmpty {
+                    modelContext.delete(note)
+                    deletedCount += 1
+                }
+            }
+            
+            if deletedCount > 0 {
+                try modelContext.save()
+                logger.info("Cleaned up \(deletedCount) empty note(s)")
+            }
+        } catch {
+            logger.error("Failed to cleanup empty notes: \(error.localizedDescription)")
         }
     }
 }

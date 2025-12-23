@@ -23,7 +23,9 @@ struct NoteEditorView: View {
     @State private var saveTask: Task<Void, Never>?
     @FocusState private var titleFieldFocused: Bool
     
-    // Template tracking state
+    // Template tracking state for auto-deletion logic.
+    // Once didEditAfterTemplateInsert becomes true, it stays true (user-specified requirement).
+    // This means edit-then-revert still saves the note (intentional UX decision).
     @State private var templateWasInserted: Bool = false
     @State private var templateSnapshotTitle: String = ""
     @State private var templateSnapshotContent: String = ""
@@ -128,6 +130,9 @@ struct NoteEditorView: View {
                 isEditingNote = true
             }
             .onDisappear {
+                // Auto-delete or save on exit. This enables the iOS Notes "ghost row" animation
+                // where empty notes briefly appear then slide away. For crash safety,
+                // NotesStore.cleanupEmptyNotes() handles orphaned empty notes on next cold start.
                 isEditingNote = false
                 saveTask?.cancel()
                 if shouldDeleteNote {
@@ -149,6 +154,11 @@ struct NoteEditorView: View {
                             titleDraft.trimmingCharacters(in: .whitespacesAndNewlines) == AppStrings.newNoteTitle)
     }
     
+    /// Determines if this note should be auto-deleted on exit.
+    /// Only applies to compose-created notes (prevents accidental deletion of existing notes).
+    /// Two deletion rules:
+    /// 1. Empty-note rule: content and title are both empty/whitespace
+    /// 2. Template-unchanged rule: template was inserted but user made no changes after
     private var shouldDeleteNote: Bool {
         guard isComposeDraft else { return false }
         
@@ -194,6 +204,8 @@ struct NoteEditorView: View {
     
     private func insertTemplate(_ template: WorkoutTemplate) {
         isApplyingTemplate = true
+        defer { isApplyingTemplate = false }
+        
         titleDraft = template.name
         commitTitle()
         content = template.content
@@ -201,7 +213,6 @@ struct NoteEditorView: View {
         didEditAfterTemplateInsert = false
         templateSnapshotTitle = titleDraft
         templateSnapshotContent = content
-        isApplyingTemplate = false
         scheduleDebouncedSave(template.content)
     }
 }
