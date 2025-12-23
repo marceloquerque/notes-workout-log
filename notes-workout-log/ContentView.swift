@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var navigationPath = NavigationPath()
     @State private var activeComposeFolder: Folder?
     @State private var isEditingNote: Bool = false
+    @State private var draftNoteID: UUID?
     
     private var defaultFolder: Folder? {
         folders.first(where: { $0.isSystemFolder }) ?? folders.first
@@ -54,7 +55,12 @@ struct ContentView: View {
                     NotesListView(folder: folder, activeComposeFolder: $activeComposeFolder)
                 }
                 .navigationDestination(for: Note.self) { note in
-                    NoteEditorView(note: note, isEditingNote: $isEditingNote)
+                    NoteEditorView(
+                        note: note,
+                        isEditingNote: $isEditingNote,
+                        isComposeDraft: note.id == draftNoteID,
+                        draftNoteID: $draftNoteID
+                    )
                 }
             }
             
@@ -82,6 +88,7 @@ struct ContentView: View {
         let targetFolder = activeComposeFolder ?? defaultFolder
         guard let folder = targetFolder,
               let note = store.createNote(in: folder) else { return }
+        draftNoteID = note.id
         navigationPath.append(note)
     }
 }

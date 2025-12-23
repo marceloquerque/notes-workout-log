@@ -15,15 +15,26 @@ struct NoteEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var note: Note
     @Binding var isEditingNote: Bool
+    let isComposeDraft: Bool
+    @Binding var draftNoteID: UUID?
     @State private var content: String
     @State private var titleDraft: String
     @State private var isEditingTitle: Bool = false
     @State private var saveTask: Task<Void, Never>?
     @FocusState private var titleFieldFocused: Bool
     
-    init(note: Note, isEditingNote: Binding<Bool>) {
+    // Template tracking state
+    @State private var templateWasInserted: Bool = false
+    @State private var templateSnapshotTitle: String = ""
+    @State private var templateSnapshotContent: String = ""
+    @State private var didEditAfterTemplateInsert: Bool = false
+    @State private var isApplyingTemplate: Bool = false
+    
+    init(note: Note, isEditingNote: Binding<Bool>, isComposeDraft: Bool = false, draftNoteID: Binding<UUID?> = .constant(nil)) {
         self.note = note
         self._isEditingNote = isEditingNote
+        self.isComposeDraft = isComposeDraft
+        self._draftNoteID = draftNoteID
         self._content = State(initialValue: note.content)
         self._titleDraft = State(initialValue: note.title)
     }
@@ -37,7 +48,6 @@ struct NoteEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        saveImmediately()
                         dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
@@ -104,7 +114,15 @@ struct NoteEditorView: View {
                 }
             }
             .onChange(of: content) { _, newValue in
+                if templateWasInserted && !isApplyingTemplate && newValue != templateSnapshotContent {
+                    didEditAfterTemplateInsert = true
+                }
                 scheduleDebouncedSave(newValue)
+            }
+            .onChange(of: titleDraft) { _, newValue in
+                if templateWasInserted && !isApplyingTemplate && newValue != templateSnapshotTitle {
+                    didEditAfterTemplateInsert = true
+                }
             }
             .onAppear {
                 isEditingNote = true
@@ -112,7 +130,12 @@ struct NoteEditorView: View {
             .onDisappear {
                 isEditingNote = false
                 saveTask?.cancel()
-                saveImmediately()
+                if shouldDeleteNote {
+                    store.deleteNote(note)
+                } else {
+                    saveImmediately()
+                }
+                draftNoteID = nil
             }
     }
     
@@ -124,6 +147,26 @@ struct NoteEditorView: View {
     private var isNewNote: Bool {
         content.isEmpty && (titleDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                             titleDraft.trimmingCharacters(in: .whitespacesAndNewlines) == AppStrings.newNoteTitle)
+    }
+    
+    private var shouldDeleteNote: Bool {
+        guard isComposeDraft else { return false }
+        
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedTitle = titleDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Empty-note rule
+        if trimmedContent.isEmpty && trimmedTitle.isEmpty {
+            return true
+        }
+        
+        // Template-unchanged rule
+        if templateWasInserted && !didEditAfterTemplateInsert &&
+           titleDraft == templateSnapshotTitle && content == templateSnapshotContent {
+            return true
+        }
+        
+        return false
     }
     
     private func commitTitle() {
@@ -150,15 +193,22 @@ struct NoteEditorView: View {
     }
     
     private func insertTemplate(_ template: WorkoutTemplate) {
+        isApplyingTemplate = true
         titleDraft = template.name
         commitTitle()
         content = template.content
+        templateWasInserted = true
+        didEditAfterTemplateInsert = false
+        templateSnapshotTitle = titleDraft
+        templateSnapshotContent = content
+        isApplyingTemplate = false
         scheduleDebouncedSave(template.content)
     }
 }
 
 #Preview {
     @Previewable @State var isEditingNote = false
+    @Previewable @State var draftNoteID: UUID? = nil
     let container = try! ModelContainer(for: Folder.self, Note.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     let folder = Folder(name: AppStrings.defaultFolderName)
     let note = Note(title: "Sample Title", content: "Sample note", folder: folder)
@@ -166,7 +216,7 @@ struct NoteEditorView: View {
     container.mainContext.insert(note)
     
     return NavigationStack {
-        NoteEditorView(note: note, isEditingNote: $isEditingNote)
+        NoteEditorView(note: note, isEditingNote: $isEditingNote, isComposeDraft: false, draftNoteID: $draftNoteID)
             .modelContainer(container)
             .environment(NotesStore(modelContext: container.mainContext))
             .environment(TemplateStore())
