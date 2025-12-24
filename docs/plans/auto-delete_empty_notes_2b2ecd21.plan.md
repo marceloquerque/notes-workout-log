@@ -127,4 +127,3 @@ flowchart TD
 - Empty note (no content, no title) → should delete
 - Note with template but no edits → should delete  
 - Note with template and edits → should save
-- Note with content but no title → should save

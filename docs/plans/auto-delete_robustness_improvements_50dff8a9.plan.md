@@ -80,4 +80,3 @@ Address critical edge cases identified in forensic code review: handle app crash
 ## Testing Considerations
 
 - App launch with existing empty notes → should clean them up
-- App crash during note editing → empty note should be cleaned up on next launch
