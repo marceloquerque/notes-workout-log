@@ -80,6 +80,10 @@ enum SectionDetector {
         "notes": .notes
     ]
     
+    /// Regex for prescription lines: "3 sets • rest TBD", "2-3 sets • rest 90s"
+    private static let prescriptionPattern = #"^\s*\d+(?:-\d+)?\s+sets\s*•\s*rest\s+.+$"#
+    private static let prescriptionRegex = try! NSRegularExpression(pattern: prescriptionPattern, options: [])
+    
     /// Detect which section the cursor is in by scanning backward for headers
     static func currentSection(at cursorPosition: Int, in text: String) -> WorkoutSection? {
         let nsString = text as NSString
@@ -103,11 +107,45 @@ enum SectionDetector {
     static func labelsEnabled(at cursorPosition: Int, in text: String) -> Bool {
         currentSection(at: cursorPosition, in: text)?.supportsLabels ?? false
     }
+    
+    /// Check if a line is a section header
+    static func isSectionHeader(_ line: String) -> Bool {
+        let trimmed = line.trimmingCharacters(in: .whitespaces).lowercased()
+        return headers[trimmed] != nil
+    }
+    
+    /// Check if a line is a prescription line (e.g., "3 sets • rest 90s")
+    static func isPrescriptionLine(_ line: String) -> Bool {
+        let range = NSRange(location: 0, length: (line as NSString).length)
+        return prescriptionRegex.firstMatch(in: line, options: [], range: range) != nil
+    }
 }
 
 // MARK: - Line Utilities
 
+/// Represents a single line with its content and range (excluding trailing newline)
+struct LineInfo {
+    let content: String
+    let range: NSRange
+}
+
 enum LineUtilities {
+    /// Enumerate all lines in text, providing content and range (excluding trailing newline)
+    static func enumerateLines(in text: String) -> [LineInfo] {
+        var lines: [LineInfo] = []
+        let nsString = text as NSString
+        
+        nsString.enumerateSubstrings(
+            in: NSRange(location: 0, length: nsString.length),
+            options: [.byLines, .substringNotRequired]
+        ) { _, substringRange, _, _ in
+            let content = nsString.substring(with: substringRange)
+            lines.append(LineInfo(content: content, range: substringRange))
+        }
+        
+        return lines
+    }
+    
     /// Get the range of the line containing the given location
     static func lineRange(at location: Int, in text: String) -> NSRange {
         let nsString = text as NSString
@@ -219,25 +257,49 @@ struct AttributedTextEditor: UIViewRepresentable {
             let attributedString = NSMutableAttributedString(string: text)
             let fullRange = NSRange(location: 0, length: attributedString.length)
             
-            // Base styling
+            // 1. Base body styling (all text)
             let bodyFont = UIFont.preferredFont(forTextStyle: .body)
             attributedString.addAttribute(.font, value: bodyFont, range: fullRange)
             attributedString.addAttribute(.foregroundColor, value: UIColor.label, range: fullRange)
             
             // Find and cache tokens
             cachedTokens = LabelTokenParser.findTokens(in: text)
+            let validTokens = cachedTokens.filter { SectionDetector.labelsEnabled(at: $0.range.location, in: text) }
             
-            // Apply label styling only in valid sections
+            // Enumerate lines for section header and prescription styling
+            let lines = LineUtilities.enumerateLines(in: text)
+            
+            // 2. Prescription line styling (subheadline + secondary) - skip lines with label tokens
+            let subheadlineFont = UIFont.preferredFont(forTextStyle: .subheadline)
+            for line in lines {
+                guard SectionDetector.isPrescriptionLine(line.content) else { continue }
+                
+                // Skip if line contains a label token
+                let hasLabelToken = validTokens.contains { NSIntersectionRange($0.range, line.range).length > 0 }
+                if hasLabelToken { continue }
+                
+                attributedString.addAttribute(.font, value: subheadlineFont, range: line.range)
+                attributedString.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: line.range)
+            }
+            
+            // 3. Section header styling (title3 + semibold)
+            let title3Font = UIFont.preferredFont(forTextStyle: .title3)
+            let semiboldTitle3Font = UIFontMetrics(forTextStyle: .title3).scaledFont(
+                for: UIFont.systemFont(ofSize: title3Font.pointSize, weight: .semibold)
+            )
+            for line in lines {
+                guard SectionDetector.isSectionHeader(line.content) else { continue }
+                attributedString.addAttribute(.font, value: semiboldTitle3Font, range: line.range)
+            }
+            
+            // 4. Label token styling (accent @ 0.65 + medium) - overrides prescription if conflict
             let labelFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .medium)
             let labelColor = UIColor.tintColor.withAlphaComponent(0.65)
             
-            for token in cachedTokens {
-                // Check if token is in a label-enabled section
-                if SectionDetector.labelsEnabled(at: token.range.location, in: text) {
-                    attributedString.addAttribute(.font, value: labelFont, range: token.range)
-                    attributedString.addAttribute(.foregroundColor, value: labelColor, range: token.range)
-                    attributedString.addAttribute(.structuralLabelToken, value: true, range: token.range)
-                }
+            for token in validTokens {
+                attributedString.addAttribute(.font, value: labelFont, range: token.range)
+                attributedString.addAttribute(.foregroundColor, value: labelColor, range: token.range)
+                attributedString.addAttribute(.structuralLabelToken, value: true, range: token.range)
             }
             
             textView.attributedText = attributedString
