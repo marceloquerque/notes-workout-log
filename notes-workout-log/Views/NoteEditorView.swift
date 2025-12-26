@@ -42,9 +42,8 @@ struct NoteEditorView: View {
     }
     
     var body: some View {
-        TextEditor(text: $content)
+        AttributedTextEditor(text: $content)
             .padding(.horizontal)
-            .autocorrectionDisabled()
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
