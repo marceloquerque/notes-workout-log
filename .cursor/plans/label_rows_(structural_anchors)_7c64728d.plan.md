@@ -136,11 +136,9 @@ On text change:
 
 ```swift
 let labelPattern = #"^([A-Z])(\d+)\.\s"#
-// Matches: A1. , A2. , B1. , C3. 
-// Does NOT match: AA1. , Exercise1. 
+// Matches: A1. , A2. , B1. , C3.
+// Does NOT match: AA1. , Exercise1.
 ```
-
-
 
 ### Next Label Calculation
 
