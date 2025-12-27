@@ -52,6 +52,9 @@ enum AppStrings {
     // MARK: Templates
     static let templates = "Templates"
 
+    // MARK: Set Groups
+    static let insertSetGroup = "Insert Set Group"
+
     // MARK: Errors
     enum Errors {
         static let defaultTitle = "Error"

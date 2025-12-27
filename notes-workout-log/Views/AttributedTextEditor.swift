@@ -322,6 +322,34 @@ struct AttributedTextEditor: UIViewRepresentable {
         
         // MARK: - UITextViewDelegate
         
+        func textView(
+            _ textView: UITextView,
+            editMenuForTextIn range: NSRange,
+            suggestedActions: [UIMenuElement]
+        ) -> UIMenu? {
+            let currentText = textView.text ?? ""
+            
+            // Only show "Insert Set Group" when:
+            // 1. Selection is an insertion point (caret, not a range selection)
+            // 2. Caret is in a label-enabled section (Skill Work or Main Work)
+            guard range.length == 0,
+                  SectionDetector.labelsEnabled(at: range.location, in: currentText) else {
+                return nil // Return nil to show standard system menu unchanged
+            }
+            
+            // Create the Insert Set Group action
+            let insertAction = UIAction(
+                title: AppStrings.insertSetGroup,
+                image: UIImage(systemName: "list.bullet")
+            ) { [weak self, weak textView] _ in
+                guard let self, let textView else { return }
+                self.insertSetGroup(in: textView)
+            }
+            
+            // Return menu with our action prepended to system actions
+            return UIMenu(children: [insertAction] + suggestedActions)
+        }
+        
         func textViewDidChange(_ textView: UITextView) {
             guard !isUpdatingText else { return }
             
@@ -491,6 +519,97 @@ struct AttributedTextEditor: UIViewRepresentable {
             refreshStyling(in: textView)
             
             return false
+        }
+        
+        // MARK: - Set Group Insertion Helpers
+        
+        /// Determine the next label letter (A, B, C, ...) within the current section.
+        /// Each section (Skill Work, Main Work) has its own independent letter sequence.
+        private func nextLabelLetter(at cursorPosition: Int, in text: String) -> Character {
+            // Find current section's body range
+            let lines = LineUtilities.enumerateLines(in: text)
+            
+            // Find section header above cursor
+            var sectionStartLocation = 0
+            for line in lines {
+                if line.range.location >= cursorPosition { break }
+                if SectionDetector.isSectionHeader(line.content) {
+                    sectionStartLocation = line.range.location + line.range.length
+                }
+            }
+            
+            // Find next section header below cursor (or end of text)
+            var sectionEndLocation = (text as NSString).length
+            for line in lines {
+                if line.range.location <= cursorPosition { continue }
+                if SectionDetector.isSectionHeader(line.content) {
+                    sectionEndLocation = line.range.location
+                    break
+                }
+            }
+            
+            let sectionRange = NSRange(location: sectionStartLocation, length: sectionEndLocation - sectionStartLocation)
+            
+            // Find all label tokens in the section
+            let allTokens = LabelTokenParser.findTokens(in: text)
+            let sectionTokens = allTokens.filter { NSLocationInRange($0.range.location, sectionRange) }
+            
+            // Find highest letter used
+            let letters = sectionTokens.map { $0.letter }
+            guard let maxLetter = letters.max() else {
+                return "A"
+            }
+            
+            // Return next letter (wrap to A after Z)
+            let nextAscii = maxLetter.asciiValue.map { $0 + 1 } ?? 65
+            if nextAscii > 90 { return "A" } // Past Z, wrap to A
+            return Character(UnicodeScalar(nextAscii))
+        }
+        
+        /// Insert a set group block at the current cursor position.
+        /// Block format: "3 sets • rest 90s\n{letter}1. \n{letter}2. \n"
+        /// Caret is placed right after the first label token for immediate typing.
+        func insertSetGroup(in textView: UITextView) {
+            let currentText = textView.text ?? ""
+            let cursorPosition = textView.selectedRange.location
+            
+            // Determine next label letter for this section
+            let letter = nextLabelLetter(at: cursorPosition, in: currentText)
+            
+            // Check if we need a leading newline (mid-line insertion)
+            let needsLeadingNewline: Bool
+            if cursorPosition == 0 {
+                needsLeadingNewline = false
+            } else {
+                let nsString = currentText as NSString
+                let prevChar = nsString.substring(with: NSRange(location: cursorPosition - 1, length: 1))
+                needsLeadingNewline = prevChar != "\n"
+            }
+            
+            // Build the set group block
+            let prescriptionLine = "3 sets • rest 90s"
+            let label1 = "\(letter)1. "
+            let label2 = "\(letter)2. "
+            
+            let leadingNewline = needsLeadingNewline ? "\n" : ""
+            let blockText = "\(leadingNewline)\(prescriptionLine)\n\(label1)\n\(label2)\n"
+            
+            // Calculate caret offset to place cursor right after first label
+            // leadingNewline + prescriptionLine + "\n" + label1
+            let caretOffset = leadingNewline.utf16.count + prescriptionLine.utf16.count + 1 + label1.utf16.count
+            
+            // Insert the block
+            isUpdatingText = true
+            textView.insertText(blockText)
+            isUpdatingText = false
+            
+            // Position caret after first label token
+            let newCaretPosition = cursorPosition + caretOffset
+            textView.selectedRange = NSRange(location: newCaretPosition, length: 0)
+            
+            // Sync and restyle
+            text.wrappedValue = textView.text ?? ""
+            refreshStyling(in: textView)
         }
     }
 }
